@@ -49,7 +49,7 @@ ARG WORKDIR="/iota"
 WORKDIR "$WORKDIR"
 
 # Install runtime dependencies and tools
-RUN apt update && apt install -y libpq5 ca-certificates curl
+RUN apt update && apt install -y libpq5 ca-certificates curl git
 
 COPY --from=builder /iota/iota /usr/local/bin
 
