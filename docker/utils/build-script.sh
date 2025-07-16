@@ -66,7 +66,7 @@ echo "build date:                 $BUILD_DATE"
 echo "git revision:               $GIT_REVISION"
 echo
 
-docker build -f "$DOCKERFILE" "$REPO_ROOT" \
+docker buildx build -f "$DOCKERFILE" "$REPO_ROOT" \
 	-t ${IMAGE_TAG} \
 	--build-arg RUST_IMAGE_VERSION="${RUST_IMAGE_VERSION}" \
 	--build-arg PROFILE="$PROFILE" \
@@ -74,4 +74,5 @@ docker build -f "$DOCKERFILE" "$REPO_ROOT" \
 	--build-arg BUILD_DATE="$BUILD_DATE" \
 	--build-arg GIT_REVISION="$GIT_REVISION" \
 	--target runtime \
+    --platform linux/amd64,linux/arm64 \
 	"$@"
