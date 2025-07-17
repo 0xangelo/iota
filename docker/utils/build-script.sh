@@ -75,4 +75,5 @@ docker buildx build -f "$DOCKERFILE" "$REPO_ROOT" \
 	--build-arg GIT_REVISION="$GIT_REVISION" \
 	--target runtime \
     --platform linux/amd64,linux/arm64 \
+    --push \
 	"$@"
