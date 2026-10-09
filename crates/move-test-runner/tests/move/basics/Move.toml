@@ -1,0 +1,9 @@
+[package]
+edition = "2024"
+name    = "Basics"
+
+[dependencies]
+MoveStdlib = { local = "../std" }
+
+[addresses]
+basics = "0x0"

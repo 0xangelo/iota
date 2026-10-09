@@ -1,0 +1,45 @@
+[package]
+name = "move-test-runner"
+version = "0.1.0"
+authors = ["Angelo <doom444@pm.me>"]
+edition = "2021"
+license = "Apache-2.0"
+publish = false
+description = "In-process Move unit test runner with fast instruction coverage"
+
+[lints]
+workspace = true
+
+[dependencies]
+# external dependencies
+anstream = "0.6"
+anyhow.workspace = true
+bcs.workspace = true
+clap.workspace = true
+rayon = "1"
+tempfile.workspace = true
+thiserror.workspace = true
+
+# internal dependencies
+iota-move-build.workspace = true
+iota-move-natives = { path = "../../iota-execution/latest/iota-move-natives", package = "iota-move-natives-latest" }
+iota-package-management.workspace = true
+iota-protocol-config.workspace = true
+iota-sdk-types.workspace = true
+iota-types.workspace = true
+move-binary-format.workspace = true
+move-bytecode-utils.workspace = true
+move-command-line-common.workspace = true
+move-compiler.workspace = true
+move-core-types.workspace = true
+move-coverage = { path = "../../external-crates/move/crates/move-coverage" }
+move-package.workspace = true
+move-stdlib-natives = { path = "../../external-crates/move/crates/move-stdlib-natives", features = ["testing"] }
+move-unit-test.workspace = true
+move-vm-config.workspace = true
+move-vm-runtime = { path = "../../external-crates/move/crates/move-vm-runtime", features = ["coverage"] }
+move-vm-test-utils.workspace = true
+prometheus-filtered.workspace = true
+
+[dev-dependencies]
+insta.workspace = true

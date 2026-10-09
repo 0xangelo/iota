@@ -1,0 +1,51 @@
+name: Release move-test-runner
+
+# Tags are `move-test-runner-v<crate version>`, optionally with a `-<suffix>` for a pre-release.
+on:
+  push:
+    tags: ["move-test-runner-v*"]
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  release:
+    timeout-minutes: 90
+    name: Test, build and publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Check the tag against the crate version
+        id: version
+        run: |
+          version=$(cargo metadata --no-deps --locked --format-version 1 \
+            | jq -r '.packages[] | select(.name == "move-test-runner") | .version')
+          case "$GITHUB_REF_NAME" in
+            "move-test-runner-v$version") echo "prerelease=false" >> "$GITHUB_OUTPUT" ;;
+            "move-test-runner-v$version-"*) echo "prerelease=true" >> "$GITHUB_OUTPUT" ;;
+            *) echo "::error::tag $GITHUB_REF_NAME doesn't match crate version $version"; exit 1 ;;
+          esac
+
+      - name: Test
+        run: cargo test --locked -p move-test-runner
+
+      - name: Build
+        run: cargo build --locked --release -p move-test-runner
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PRERELEASE: ${{ steps.version.outputs.prerelease }}
+        run: |
+          asset=move-test-runner-x86_64-unknown-linux-gnu
+          cp target/release/move-test-runner "$asset"
+          gh release create "$GITHUB_REF_NAME" "$asset" \
+            --title "$GITHUB_REF_NAME" \
+            --notes "Linux x86_64 build of \`move-test-runner\`." \
+            --prerelease="$PRERELEASE"

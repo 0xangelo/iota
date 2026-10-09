@@ -154,6 +154,7 @@ members = [
   "crates/iota-upgrade-compatibility-transactional-tests",
   "crates/iota-verifier-transactional-tests",
   "crates/iota-vm-sdk",
+  "crates/move-test-runner",
   "crates/prometheus-closure-metric",
   "crates/prometheus-filtered",
   "crates/simulacrum",

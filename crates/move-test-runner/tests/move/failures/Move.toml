@@ -1,0 +1,9 @@
+[package]
+edition = "2024"
+name    = "Failures"
+
+[dependencies]
+MoveStdlib = { local = "../std" }
+
+[addresses]
+failures = "0x0"

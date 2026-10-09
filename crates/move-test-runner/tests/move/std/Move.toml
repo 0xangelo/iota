@@ -1,0 +1,7 @@
+# Just enough of the standard library for test mode, which requires `std::unit_test`.
+[package]
+edition = "2024"
+name    = "MoveStdlib"
+
+[addresses]
+std = "0x1"

@@ -9862,6 +9862,39 @@ dependencies = [
 ]
 
 [[package]]
+name = "move-test-runner"
+version = "0.1.0"
+dependencies = [
+ "anstream",
+ "anyhow",
+ "bcs",
+ "clap",
+ "insta",
+ "iota-move-build",
+ "iota-move-natives-latest",
+ "iota-package-management",
+ "iota-protocol-config",
+ "iota-sdk-types",
+ "iota-types",
+ "move-binary-format",
+ "move-bytecode-utils",
+ "move-command-line-common",
+ "move-compiler",
+ "move-core-types",
+ "move-coverage",
+ "move-package",
+ "move-stdlib-natives",
+ "move-unit-test",
+ "move-vm-config",
+ "move-vm-runtime",
+ "move-vm-test-utils",
+ "prometheus-filtered",
+ "rayon",
+ "tempfile",
+ "thiserror 1.0.64",
+]
+
+[[package]]
 name = "move-trace-format"
 version = "0.0.1"
 dependencies = [
