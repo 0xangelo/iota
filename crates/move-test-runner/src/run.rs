@@ -1,15 +1,3 @@
-//! Run a Move package's unit tests in-process, optionally collecting
-//! instruction coverage.
-//!
-//! Tests run the way `iota move test` runs them: same natives, unit-test gas
-//! schedule and pass/fail rules. [`Coverage::summary`] prints what `iota move
-//! coverage --dev summary` would.
-//!
-//! Coverage comes from the in-memory hook behind `move-vm-runtime`'s `coverage`
-//! feature, not from the CLI's per-instruction trace file. Other repositories
-//! use the binary, published as a release by pushing a
-//! `move-test-runner-v<version>` tag.
-
 use std::{
     collections::{BTreeMap, BTreeSet},
     num::NonZeroUsize,
@@ -22,39 +10,14 @@ use move_core_types::{account_address::AccountAddress, identifier::Identifier};
 use move_coverage::coverage_map::ExecCoverageMap;
 use rayon::prelude::*;
 
-mod compile;
-mod env;
-mod exec;
-
-type Result<T, E = Error> = std::result::Result<T, E>;
-
-type BoxError = Box<dyn std::error::Error + Send + Sync + 'static>;
+use crate::{Error, Result, compile, exec};
 
 /// `iota move test`'s per-test gas limit when `--gas-limit` isn't given.
 const DEFAULT_GAS_LIMIT: u64 = 1_000_000;
 
-/// Failure to run a package's tests; failing tests are reported in [`Report`]
-/// instead.
-#[derive(thiserror::Error, Debug)]
-#[non_exhaustive]
-pub enum Error {
-    /// Resolving or compiling the package failed.
-    #[error("building the Move package: {0}")]
-    Build(BoxError),
-    /// The package has a `#[random_test]`, which this runner doesn't support.
-    #[error("`#[random_test]` is not supported: {0}")]
-    RandomTest(String),
-    /// The compiled modules couldn't be loaded into the tests' storage.
-    #[error("loading modules into test storage: {0}")]
-    Storage(BoxError),
-    /// The test threads couldn't be started.
-    #[error("starting the test threads: {0}")]
-    Threads(BoxError),
-}
-
 /// How [`run`] runs the tests.
 #[derive(Clone, Debug)]
-pub struct Config {
+pub(crate) struct Config {
     gas_limit: u64,
     threads: Option<NonZeroUsize>,
     coverage: bool,
@@ -74,21 +37,21 @@ impl Config {
     /// Gas budget of each test under the unit-test cost schedule, as `iota move
     /// test --gas-limit`.
     #[must_use]
-    pub const fn gas_limit(mut self, gas_limit: u64) -> Self {
+    pub(crate) const fn gas_limit(mut self, gas_limit: u64) -> Self {
         self.gas_limit = gas_limit;
         self
     }
 
     /// How many tests run at once. Defaults to the available parallelism.
     #[must_use]
-    pub const fn threads(mut self, threads: NonZeroUsize) -> Self {
+    pub(crate) const fn threads(mut self, threads: NonZeroUsize) -> Self {
         self.threads = Some(threads);
         self
     }
 
     /// Record the instructions the tests execute, for [`Report::coverage`].
     #[must_use]
-    pub const fn coverage(mut self, coverage: bool) -> Self {
+    pub(crate) const fn coverage(mut self, coverage: bool) -> Self {
         self.coverage = coverage;
         self
     }
@@ -96,7 +59,7 @@ impl Config {
 
 /// Outcome of [`run`].
 #[derive(Debug)]
-pub struct Report {
+pub(crate) struct Report {
     passed: Vec<String>,
     failures: Vec<Failure>,
     coverage: Option<Coverage>,
@@ -105,39 +68,27 @@ pub struct Report {
 impl Report {
     /// Names of the tests that passed, as `<address>::<module>::<function>`,
     /// sorted.
-    pub fn passed(&self) -> &[String] {
+    pub(crate) fn passed(&self) -> &[String] {
         &self.passed
     }
 
     /// The tests that failed, sorted by name.
-    pub fn failures(&self) -> &[Failure] {
+    pub(crate) fn failures(&self) -> &[Failure] {
         &self.failures
     }
 
     /// Instruction coverage over the package's own modules, if
     /// [`Config::coverage`] was set.
-    pub const fn coverage(&self) -> Option<&Coverage> {
+    pub(crate) const fn coverage(&self) -> Option<&Coverage> {
         self.coverage.as_ref()
     }
 }
 
-/// A test that failed.
+/// A test that failed, and why, as `iota move test` reports it without colour.
 #[derive(Debug)]
-pub struct Failure {
+pub(crate) struct Failure {
     name: String,
     message: String,
-}
-
-impl Failure {
-    /// The test's name, as `<address>::<module>::<function>`.
-    pub fn name(&self) -> &str {
-        &self.name
-    }
-
-    /// Why it failed, as `iota move test` reports it, without colour.
-    pub fn message(&self) -> &str {
-        &self.message
-    }
 }
 
 impl std::fmt::Display for Failure {
@@ -148,7 +99,7 @@ impl std::fmt::Display for Failure {
 
 /// Which instructions of the package's own modules the tests executed.
 #[derive(Debug)]
-pub struct Coverage {
+pub(crate) struct Coverage {
     hits: ExecCoverageMap,
     modules: Vec<CompiledModule>,
 }
@@ -156,7 +107,7 @@ pub struct Coverage {
 impl Coverage {
     /// What `iota move coverage --dev summary` prints, plus
     /// `--summarize-functions` if `per_function`.
-    pub fn summary(&self, per_function: bool) -> String {
+    pub(crate) fn summary(&self, per_function: bool) -> String {
         let mut out = Vec::new();
         move_coverage::format_human_summary(
             &self.modules,
@@ -173,7 +124,7 @@ impl Coverage {
 ///
 /// Nothing is written into the package directory; build artifacts go to a
 /// temporary directory.
-pub fn run(package: impl AsRef<Path>, config: &Config) -> Result<Report> {
+pub(crate) fn run(package: impl AsRef<Path>, config: &Config) -> Result<Report> {
     static PACKAGE_HOOKS: Once = Once::new();
     PACKAGE_HOOKS.call_once(|| {
         move_package::package_hooks::register_package_hooks(Box::new(

@@ -1,7 +1,45 @@
+//! Run a Move package's unit tests in-process, optionally printing their
+//! instruction coverage.
+//!
+//! Tests run the way `iota move test` runs them: same natives, unit-test gas
+//! schedule and pass/fail rules. With `--coverage`, it prints what `iota move
+//! coverage --dev summary` would.
+//!
+//! Coverage comes from the in-memory hook behind `move-vm-runtime`'s `coverage`
+//! feature, not from the CLI's per-instruction trace file. Pushing a
+//! `move-test-runner-v<version>` tag publishes the binary as a release.
+
 use std::{num::NonZeroUsize, path::PathBuf, process::ExitCode};
 
 use clap::Parser;
-use move_test_runner::Config;
+
+use crate::run::Config;
+
+mod compile;
+mod env;
+mod exec;
+mod run;
+
+type Result<T, E = Error> = std::result::Result<T, E>;
+
+type BoxError = Box<dyn std::error::Error + Send + Sync + 'static>;
+
+/// Failure to run a package's tests; failing tests are reported instead.
+#[derive(thiserror::Error, Debug)]
+enum Error {
+    /// Resolving or compiling the package failed.
+    #[error("building the Move package: {0}")]
+    Build(BoxError),
+    /// The package has a `#[random_test]`, which this runner doesn't support.
+    #[error("`#[random_test]` is not supported: {0}")]
+    RandomTest(String),
+    /// The compiled modules couldn't be loaded into the tests' storage.
+    #[error("loading modules into test storage: {0}")]
+    Storage(BoxError),
+    /// The test threads couldn't be started.
+    #[error("starting the test threads: {0}")]
+    Threads(BoxError),
+}
 
 /// Run a Move package's unit tests, optionally printing their coverage summary.
 ///
@@ -36,7 +74,7 @@ fn main() -> ExitCode {
         config = config.threads(threads);
     }
 
-    let report = match move_test_runner::run(&args.package, &config) {
+    let report = match run::run(&args.package, &config) {
         Ok(report) => report,
         Err(err) => {
             eprintln!("error: {err}");

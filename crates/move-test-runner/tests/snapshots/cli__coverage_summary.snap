@@ -1,6 +1,6 @@
 ---
-source: crates/move-test-runner/tests/run.rs
-expression: report.coverage().unwrap().summary(true)
+source: crates/move-test-runner/tests/cli.rs
+expression: "String::from_utf8(output.stdout).unwrap()"
 ---
 +-------------------------+
 | Move Coverage Summary   |

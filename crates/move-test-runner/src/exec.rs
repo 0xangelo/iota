@@ -29,7 +29,7 @@ pub(crate) enum Outcome {
     Failed(String, String),
 }
 
-/// Everything shared by the tests of one [`run`](crate::run).
+/// Everything shared by the tests of one [`run`](crate::run::run).
 pub(crate) struct Tests<'a> {
     plan: &'a TestPlan,
     storage: InMemoryStorage,
