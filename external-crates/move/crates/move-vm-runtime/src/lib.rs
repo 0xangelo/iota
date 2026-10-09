@@ -22,6 +22,8 @@ pub mod runtime;
 pub mod session;
 #[macro_use]
 mod tracing;
+#[cfg(feature = "coverage")]
+pub use tracing::coverage;
 mod tracing2;
 
 // Only include debugging functionality in debug builds

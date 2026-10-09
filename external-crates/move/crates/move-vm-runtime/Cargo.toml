@@ -47,3 +47,5 @@ tracing = [
   "move-vm-config/tracing",
   "move-vm-profiler/tracing",
 ]
+# In-memory instruction coverage, recorded per thread; see `tracing::coverage`.
+coverage = []
